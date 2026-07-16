@@ -436,7 +436,9 @@ async function recognizeMeal(){
       body: JSON.stringify({ contents:[{ parts }] })
     });
     const data = await response.json();
+    console.log('Gemini response:', data);
     if(data.error){ throw new Error(data.error.message || 'API error'); }
+    if(!data.candidates || !data.candidates[0]){ throw new Error('No response candidates — possibly blocked or invalid request'); }
     const text = (data.candidates?.[0]?.content?.parts||[]).map(b=>b.text||'').join('').trim();
     const clean = text.replace(/^```json/i,'').replace(/```$/,'').trim();
     const parsed = JSON.parse(clean);
@@ -445,7 +447,7 @@ async function recognizeMeal(){
     showRecognizedItems();
   }catch(e){
     console.error(e);
-    errorLine.textContent = "Recognition model couldn't parse that plate — try a clearer photo or more description.";
+    errorLine.textContent = "Error: " + (e.message || 'unknown') + " — check console for details.";
     errorLine.style.display='block';
   }finally{
     recognizeBtn.disabled = false;
@@ -530,7 +532,9 @@ async function estimateCalories(){
       body: JSON.stringify({ contents:[{ parts:[{ text: instruction + "\n\nItems:\n" + itemsText }] }] })
     });
     const data = await response.json();
+    console.log('Gemini response:', data);
     if(data.error){ throw new Error(data.error.message || 'API error'); }
+    if(!data.candidates || !data.candidates[0]){ throw new Error('No response candidates — possibly blocked or invalid request'); }
     const text = (data.candidates?.[0]?.content?.parts||[]).map(b=>b.text||'').join('').trim();
     const clean = text.replace(/^```json/i,'').replace(/```$/,'').trim();
     const parsed = JSON.parse(clean);
@@ -539,7 +543,7 @@ async function estimateCalories(){
     showFinalResult(finalResult);
   }catch(e){
     console.error(e);
-    errorLine2.textContent = "Estimation model couldn't compute that — try again.";
+    errorLine2.textContent = "Error: " + (e.message || 'unknown') + " — check console for details.";
     errorLine2.style.display='block';
   }finally{
     estimateBtn.disabled = false;
