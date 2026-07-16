@@ -1,4 +1,4 @@
-const CACHE_NAME = 'plate-v1';
+const CACHE_NAME = 'plate-v2';
 const ASSETS = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -19,9 +19,16 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   // Never cache API calls — always go to network for those
-  if (event.request.url.includes('api.anthropic.com')) return;
+  if (event.request.url.includes('generativelanguage.googleapis.com')) return;
 
+  // Network-first: always try to get the latest file; fall back to cache only if offline
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(event.request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
